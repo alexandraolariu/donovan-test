@@ -1,11 +1,12 @@
 import streamlit as st
 import pandas as pd
 import os
+from fpdf import FPDF
 
 # 1. CONFIGURARE PAGINĂ
 st.set_page_config(page_title="Water License Portal", page_icon="💧", layout="wide")
 
-# --- LISTA NEAGRĂ (Eliminăm coloanele care încarcă memoria inutil) ---
+# --- LISTA NEAGRĂ (Coloane eliminate pentru memorie) ---
 COLOANE_DE_SCOS = [
     "PostalStateDescription", "PostalCountryDescription", "StatutoryClassDesc",
     "AuthorisationTypeDesc", "AuthorisationStatusDesc", "AllocationClassDesc",
@@ -16,7 +17,50 @@ COLOANE_DE_SCOS = [
     "IsStockDomestic", "BasinList", "IsWaterAuthorisation"
 ]
 
-# 2. DESIGN (CSS)
+# 2. FUNCȚIE GENERARE PDF (Format Oficial)
+def create_pdf(data):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_margins(20, 20, 20)
+    
+    # Header
+    pdf.set_font("helvetica", "B", 16)
+    pdf.cell(0, 10, "WATER LICENCE", ln=True, align='C')
+    pdf.set_font("helvetica", "I", 12)
+    pdf.cell(0, 7, "Water Act 2000", ln=True, align='C')
+    pdf.ln(15)
+
+    # Tabel Date (Format "Label: Value")
+    def add_pdf_row(label, value):
+        pdf.set_font("helvetica", "B", 10)
+        pdf.cell(50, 8, f"{label}", border=0)
+        pdf.set_font("helvetica", "", 10)
+        pdf.multi_cell(0, 8, f"{str(value)}", border=0)
+        pdf.ln(2)
+
+    # Mapare date pe etichete oficiale
+    add_pdf_row("Reference", data.get("Water License", "N/A"))
+    add_pdf_row("Licensee", data.get("ClientLegalName", "N/A"))
+    add_pdf_row("Authorised Activity", data.get("AuthorisationTypeDesc", "N/A"))
+    add_pdf_row("Authorised Purpose", data.get("StatutoryClassDesc", "N/A"))
+    
+    # Verificăm dacă există coloana de volum, altfel punem N/A
+    volum = data.get('TotalVolume', 'N/A')
+    add_pdf_row("Nominal Entitlement", f"{volum} Megalitres")
+    
+    pdf.ln(15)
+    
+    # Footer Legal
+    pdf.set_font("helvetica", "", 9)
+    pdf.multi_cell(0, 6, "This water licence is subject to the conditions endorsed hereon or attached hereto.")
+    pdf.ln(5)
+    pdf.set_font("helvetica", "B", 9)
+    pdf.cell(0, 6, "Delegate of the Chief Executive", ln=True)
+    pdf.cell(0, 6, "Department of Regional Development, Manufacturing and Water", ln=True)
+
+    return pdf.output()
+
+# 3. DESIGN (CSS)
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -29,10 +73,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. ÎNCĂRCARE DATE
+# 4. ÎNCĂRCARE DATE
 @st.cache_data(show_spinner="Loading database...")
 def load_data():
     try:
+        # Încearcă Parquet apoi CSV
         if os.path.exists("water-licence.parquet"):
             df = pd.read_parquet("water-licence.parquet")
         else:
@@ -42,35 +87,32 @@ def load_data():
         cols_to_drop = [c for c in df.columns if any(x.strip().lower() == c.strip().lower() for x in COLOANE_DE_SCOS)]
         df = df.drop(columns=cols_to_drop)
 
-        # Redenumim referința pentru claritate în tabel
         if "AuthorisationReference" in df.columns:
             df = df.rename(columns={"AuthorisationReference": "Water License"})
 
         return df.fillna('N/A')
     except Exception as e:
-        st.error(f"Eroare la date: {e}")
+        st.error(f"Eroare la încărcarea datelor: {e}")
         return pd.DataFrame()
 
 df = load_data()
 
-# 4. INTERFAȚA DE CĂUTARE
+# 5. INTERFAȚA DE CĂUTARE
 st.title("💧 Water License Search Portal")
 st.markdown("---")
 
 c1, c2, c3 = st.columns(3)
 with c1: 
-    s_name = st.text_input("👤 Legal Name:", placeholder="Search name (ex: King)...")
+    s_name = st.text_input("👤 Legal Name:", placeholder="Search name...")
 with c2: 
     s_auth = st.text_input("🔢 Water License No:", placeholder="Search ID...")
 with c3: 
-    # Placeholder curat, fără "Mary" care să te încurce
-    s_water = st.text_input("🌊 Water Name/Type:", placeholder="Search source (ex: Ground Water)...")
+    s_water = st.text_input("🌊 Water Name/Type:", placeholder="Search source...")
 
-# --- LOGICA DE FILTRARE (Fixată pe coloanele tale exacte) ---
+# LOGICA DE FILTRARE
 d_show = df.copy()
 
 if s_name:
-    # Verificăm coloana de nume legal
     target_name_col = "ClientLegalName" if "ClientLegalName" in d_show.columns else d_show.columns[0]
     d_show = d_show[d_show[target_name_col].astype(str).str.contains(s_name, case=False, na=False)]
 
@@ -79,22 +121,17 @@ if s_auth:
         d_show = d_show[d_show["Water License"].astype(str).str.contains(s_auth, case=False, na=False)]
 
 if s_water:
-    # FILTRARE PE COLOANA INDICATĂ DE TINE
-    if "WaterName/Type" in d_show.columns:
-        d_show = d_show[d_show["WaterName/Type"].astype(str).str.contains(s_water, case=False, na=False)]
-    else:
-        # Fallback în caz că numele coloanei are spații invizibile
-        actual_col = [c for c in d_show.columns if "WaterName" in c][0]
-        d_show = d_show[d_show[actual_col].astype(str).str.contains(s_water, case=False, na=False)]
+    water_cols = [c for c in d_show.columns if "WaterName" in c or "WaterName/Type" in c]
+    if water_cols:
+        d_show = d_show[d_show[water_cols[0]].astype(str).str.contains(s_water, case=False, na=False)]
 
-# 5. AFIȘARE REZULTATE
+# 6. AFIȘARE REZULTATE
 st.markdown(f"### 📋 Results ({len(d_show)} records found)")
 
-# Arătăm primele 100 de rezultate dacă nu există căutare, sau tot dacă există
 final_df = d_show.head(100) if not (s_name or s_auth or s_water) else d_show
 
 if not final_df.empty:
-    st.info("💡 Select a row to view full details below.")
+    st.info("💡 Select a row to view and download full details.")
     selection = st.dataframe(
         final_df,
         use_container_width=True,
@@ -106,26 +143,38 @@ else:
     st.warning("No results found.")
     selection = None
 
-# 6. DETALII RÂND SELECTAT
+# 7. DETALII RÂND SELECTAT & DOWNLOAD PDF
 if selection and selection.get("selection") and len(selection["selection"]["rows"]) > 0:
     selected_index = selection["selection"]["rows"][0]
     row_data = final_df.iloc[selected_index].to_dict()
     
     st.markdown('<div class="detail-card">', unsafe_allow_html=True)
-    st.subheader(f"🔍 Details: {row_data.get('Water License', 'N/A')}")
+    st.subheader(f"🔍 Record Details: {row_data.get('Water License', 'N/A')}")
     
+    # Generare fișiere pentru download
+    pdf_bytes = create_pdf(row_data)
+    csv_bytes = pd.DataFrame([row_data]).to_csv(index=False).encode('utf-8')
+
+    # Butoane Download
+    btn1, btn2 = st.columns(2)
+    with btn1:
+        st.download_button("📄 Download Official PDF", pdf_bytes, f"Licence_{row_data.get('Water License')}.pdf", "application/pdf")
+    with btn2:
+        st.download_button("📥 Download CSV Data", csv_bytes, "record.csv", "text/csv")
+    
+    st.markdown("---")
+    
+    # Afișare vizuală a tuturor datelor în coloane
     detail_cols = st.columns(3)
     for i, (key, value) in enumerate(row_data.items()):
         with detail_cols[i % 3]:
             st.markdown(f"**{key}**")
-            st.info(str(value))
+            st.write(str(value))
             
-    csv_one = pd.DataFrame([row_data]).to_csv(index=False).encode('utf-8')
-    st.download_button("📥 Download Record", csv_one, "detail.csv", "text/csv")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# 7. EXPORT GLOBAL (Jos de tot)
+# 8. EXPORT GLOBAL
 if not d_show.empty:
-    st.markdown("---")
+    st.sidebar.markdown("### Export Full Results")
     full_csv = d_show.to_csv(index=False).encode('utf-8')
-    st.download_button("📥 Download All Filtered Results", full_csv, "export.csv", "text/csv")
+    st.sidebar.download_button("📥 Download All (CSV)", full_csv, "all_results.csv", "text/csv")
