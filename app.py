@@ -17,7 +17,7 @@ COLOANE_DE_SCOS = [
     "IsStockDomestic", "BasinList", "IsWaterAuthorisation"
 ]
 
-# 2. FUNCȚIE GENERARE PDF (Format Oficial)
+# 2. FUNCȚIE GENERARE PDF (Format Oficial - Fixed Bytes Error)
 def create_pdf(data):
     pdf = FPDF()
     pdf.add_page()
@@ -44,7 +44,6 @@ def create_pdf(data):
     add_pdf_row("Authorised Activity", data.get("AuthorisationTypeDesc", "N/A"))
     add_pdf_row("Authorised Purpose", data.get("StatutoryClassDesc", "N/A"))
     
-    # Verificăm dacă există coloana de volum, altfel punem N/A
     volum = data.get('TotalVolume', 'N/A')
     add_pdf_row("Nominal Entitlement", f"{volum} Megalitres")
     
@@ -58,7 +57,8 @@ def create_pdf(data):
     pdf.cell(0, 6, "Delegate of the Chief Executive", ln=True)
     pdf.cell(0, 6, "Department of Regional Development, Manufacturing and Water", ln=True)
 
-    return pdf.output()
+    # Returnăm bytes curat pentru Streamlit
+    return bytes(pdf.output())
 
 # 3. DESIGN (CSS)
 st.markdown("""
@@ -77,7 +77,6 @@ st.markdown("""
 @st.cache_data(show_spinner="Loading database...")
 def load_data():
     try:
-        # Încearcă Parquet apoi CSV
         if os.path.exists("water-licence.parquet"):
             df = pd.read_parquet("water-licence.parquet")
         else:
@@ -151,30 +150,42 @@ if selection and selection.get("selection") and len(selection["selection"]["rows
     st.markdown('<div class="detail-card">', unsafe_allow_html=True)
     st.subheader(f"🔍 Record Details: {row_data.get('Water License', 'N/A')}")
     
-    # Generare fișiere pentru download
+    # Generare fișiere
     pdf_bytes = create_pdf(row_data)
-    csv_bytes = pd.DataFrame([row_data]).to_csv(index=False).encode('utf-8')
+    csv_one = pd.DataFrame([row_data]).to_csv(index=False).encode('utf-8')
 
-    # Butoane Download
-    btn1, btn2 = st.columns(2)
-    with btn1:
-        st.download_button("📄 Download Official PDF", pdf_bytes, f"Licence_{row_data.get('Water License')}.pdf", "application/pdf")
-    with btn2:
-        st.download_button("📥 Download CSV Data", csv_bytes, "record.csv", "text/csv")
+    # Butoane Download (Unul lângă altul)
+    b_col1, b_col2 = st.columns(2)
+    with b_col1:
+        st.download_button(
+            label="📄 Download Official PDF", 
+            data=pdf_bytes, 
+            file_name=f"Licence_{row_data.get('Water License', 'export')}.pdf", 
+            mime="application/pdf",
+            key="pdf_btn"
+        )
+    with b_col2:
+        st.download_button(
+            label="📥 Download CSV Record", 
+            data=csv_one, 
+            file_name="record.csv", 
+            mime="text/csv",
+            key="csv_btn"
+        )
     
     st.markdown("---")
     
-    # Afișare vizuală a tuturor datelor în coloane
+    # Afișare vizuală detalii
     detail_cols = st.columns(3)
     for i, (key, value) in enumerate(row_data.items()):
         with detail_cols[i % 3]:
             st.markdown(f"**{key}**")
-            st.write(str(value))
+            st.info(str(value))
             
     st.markdown('</div>', unsafe_allow_html=True)
 
-# 8. EXPORT GLOBAL
+# 8. EXPORT GLOBAL (Jos de tot, cum era inițial)
 if not d_show.empty:
-    st.sidebar.markdown("### Export Full Results")
+    st.markdown("---")
     full_csv = d_show.to_csv(index=False).encode('utf-8')
-    st.sidebar.download_button("📥 Download All (CSV)", full_csv, "all_results.csv", "text/csv")
+    st.download_button("📥 Download All Filtered Results (CSV)", data=full_csv, file_name="all_results.csv", mime="text/csv")
