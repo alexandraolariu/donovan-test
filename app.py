@@ -53,7 +53,7 @@ def create_pdf(data):
 
     # Restul câmpurilor
     add_pdf_row("Licensee", data.get("ClientLegalName", "N/A"))
-    add_pdf_row("Authorised Activity", data.get("AuthorisationTypeDesc", "N/A"))
+    add_pdf_row("Authorised Activity", data.get("AuthorisedPurposeList", "N/A"))
     add_pdf_row("Authorised Purpose", data.get("StatutoryClassDesc", "N/A"))
     
     # Adăugăm Description of Land dacă există în datele tale
