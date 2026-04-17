@@ -43,7 +43,6 @@ class PDF_With_Footer(FPDF):
 
 
 def create_pdf(data):
-
     pdf = PDF_With_Footer() 
     pdf.add_page()
     pdf.set_margins(20, 20, 20)
