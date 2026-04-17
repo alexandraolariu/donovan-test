@@ -65,18 +65,40 @@ def format_official_date(date_str):
 
 
 # 2. CLASA PDF CU FOOTER AUTOMAT ȘI LINK
+# 2. CLASA PDF CU HEADER (LOGO) ȘI FOOTER (LINK) AUTOMAT
 class PDF_With_Footer(FPDF):
-    def footer(self):
-        self.set_y(-15)
-        self.set_font("helvetica", "I", 8)
-        self.set_text_color(100, 100, 100)
+    def header(self):
+        # Verificăm dacă fișierul logo există pentru a evita erorile
+        if os.path.exists("donovanlogo.png"):
+            # Poziționăm logo-ul în dreapta sus.
+            # Parametrii: (cale_imagine, x, y, w, h)
+            # Calculăm X: lățimea paginii (210) - marginea dreaptă (20) - lățimea imaginii (~40) = ~150
+            # Y: marginea de sus (20) - o ajustare mică ca să nu fie lipit (-5)
+            # W (lățime): 40mm (înălțimea se calculează automat proporțional dacă nu e specificată)
+            self.image("donovanlogo.png", 150, 15, 40)
+            
+            # Resetăm cursorul după imagine ca să nu se suprapună cu titlul.
+            # Dacă logo-ul e înalt, s-ar putea să ai nevoie de un pdf.ln(20) la începutul create_pdf
+            self.set_y(20) 
         
-        # Text cu Link
-        self.write(5, "This is not an official extract. For an official extract please contact ")
+    def footer(self):
+        # Poziționăm cursorul la 1.5 cm de subsol
+        self.set_y(-15)
+        # ... restul codului footer-ului rămâne neschimbat ...
+        self.set_font("helvetica", "I", 8)
+        self.set_text_color(100, 100, 100) # Un gri discret
+        
+        # Textul normal
+        text_part1 = "This is not an official extract. For an official extract please contact "
+        self.write(5, text_part1)
+        
+        # Textul cu link (albastru și subliniat)
         self.set_text_color(0, 0, 255)
         self.set_font("helvetica", "IU", 8)
-        link = "https://www.business.qld.gov.au/industries/mining-energy-water/water/authorisations/licences/applications"
-        self.write(5, "Business Queensland", link)
+        link_url = "https://www.business.qld.gov.au/industries/mining-energy-water/water/authorisations/licences/applications"
+        self.write(5, "Business Queensland", link_url)
+        
+        # Resetăm culoarea pentru orice eventualitate
         self.set_text_color(0, 0, 0)
 
 def create_pdf(data):
