@@ -21,11 +21,25 @@ COLOANE_DE_SCOS = [
 
 # Funcție utilitară pentru transformarea datei în format oficial (textual)
 def format_official_date(date_str):
-    try:
-        # Curățăm data de eventuale ore și convertim
-        clean_date = str(date_str).split(' ')[0]
-        dt = datetime.strptime(clean_date, "%Y-%m-%d")
+    if not date_str or str(date_str).lower() == 'n/a':
+        return "DATE UNKNOWN"
         
+    try:
+        # Curățăm string-ul (scoatem orele dacă există)
+        clean_date = str(date_str).split(' ')[0]
+        
+        # Încercăm cele mai comune formate de dată
+        dt = None
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y"):
+            try:
+                dt = datetime.strptime(clean_date, fmt)
+                break
+            except ValueError:
+                continue
+        
+        if dt is None:
+            return str(date_str) # Dacă nu recunoaște formatul, măcar returnează textul brut
+
         days_words = {
             1: "FIRST", 2: "SECOND", 3: "THIRD", 4: "FOURTH", 5: "FIFTH",
             6: "SIXTH", 7: "SEVENTH", 8: "EIGHTH", 9: "NINTH", 10: "TENTH",
@@ -44,9 +58,11 @@ def format_official_date(date_str):
         
         day_text = days_words.get(dt.day, str(dt.day))
         month_text = months_words.get(dt.month, str(dt.month))
+        
         return f"{day_text} day of {month_text} {dt.year}"
     except:
-        return "TWENTY-FIRST day of SEPTEMBER 2021" # Fallback oficial
+        return str(date_str) # În cel mai rău caz, dă-ne data exact cum e în tabel
+
 
 # 2. CLASA PDF CU FOOTER AUTOMAT ȘI LINK
 class PDF_With_Footer(FPDF):
