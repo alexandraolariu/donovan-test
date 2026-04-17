@@ -53,15 +53,29 @@ def create_pdf(data):
 
     # Restul câmpurilor
     add_pdf_row("Licensee", data.get("ClientLegalName", "N/A"))
-    add_pdf_row("Authorised Activity", data.get("AuthorisedPurposeList", "N/A"))
-    add_pdf_row("Authorised Purpose", data.get("StatutoryClassDesc", "N/A"))
+    add_pdf_row("Authorised Purpose", data.get("AuthorisedPurposeList", "N/A"))
+
     
     # Adăugăm Description of Land dacă există în datele tale
-    land = data.get("DescriptionOfLand", "N/A")
+    land = data.get("LocationLandList", "N/A")
     add_pdf_row("Description of Land", land)
     
-    volum = data.get('TotalVolume', 'N/A')
-    add_pdf_row("Nominal Entitlement", f"{volum} Megalitres")
+    volum = data.get('NominalEntitlementPerWaterYearAndUnits', 'N/A')
+    add_pdf_row("Nominal Entitlement", f"{volum}")
+
+    add_pdf_row("Management Subgroup List", data.get("ManagementSubgroupList", "N/A"))
+
+    add_pdf_row("Management Group List", data.get("ManagementGroupList", "N/A"))
+
+    add_pdf_row("Water Sources List", data.get("WaterSourcesList", "N/A"))
+
+    add_pdf_row("Water Plan", data.get("WRPDescriptionList", "N/A"))
+
+    add_pdf_row("Water Name/Type", data.get("WaterName/Type", "N/A"))
+
+    add_pdf_row("Max Rate of Extraction", data.get("MaxExtractionRateMLperDay", "N/A"))
+
+    add_pdf_row("Schedule A Conditions", data.get("ScheduleAConditionsList", "N/A"))
     
     pdf.ln(10)
     
