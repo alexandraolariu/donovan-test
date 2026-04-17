@@ -68,7 +68,7 @@ def create_pdf(data):
     pdf.set_font("helvetica", "B", 10)
     pdf.cell(50, 8, "Reference")
     pdf.set_font("helvetica", "", 10)
-    pdf.cell(40, 8, str(data.get("Water License", "N/A")))
+    pdf.cell(40, 8, str(data.get("Water License", "-")))
     
     pdf.set_font("helvetica", "B", 10)
     pdf.cell(40, 8, "Expiry Date")
@@ -78,30 +78,30 @@ def create_pdf(data):
     pdf.ln(2)
 
     # Restul câmpurilor
-    add_pdf_row("Licensee", data.get("ClientLegalName", "N/A"))
-    add_pdf_row("Authorised Purpose", data.get("AuthorisedPurposeList", "N/A"))
+    add_pdf_row("Licensee", data.get("ClientLegalName", "-"))
+    add_pdf_row("Authorised Purpose", data.get("AuthorisedPurposeList", "-"))
 
     
     # Adăugăm Description of Land dacă există în datele tale
-    land = data.get("LocationLandList", "N/A")
+    land = data.get("LocationLandList", "-")
     add_pdf_row("Description of Land", land)
     
-    volum = data.get('NominalEntitlementPerWaterYearAndUnits', 'N/A')
+    volum = data.get('NominalEntitlementPerWaterYearAndUnits', '-')
     add_pdf_row("Nominal Entitlement", f"{volum}")
 
-    add_pdf_row("Management Subgroup List", data.get("ManagementSubgroupList", "N/A"))
+    add_pdf_row("Management Subgroup List", data.get("ManagementSubgroupList", "-"))
 
-    add_pdf_row("Management Group List", data.get("ManagementGroupList", "N/A"))
+    add_pdf_row("Management Group List", data.get("ManagementGroupList", "-"))
 
-    add_pdf_row("Water Sources List", data.get("WaterSourcesList", "N/A"))
+    add_pdf_row("Water Sources List", data.get("WaterSourcesList", "-"))
 
-    add_pdf_row("Water Plan", data.get("WRPDescriptionList", "N/A"))
+    add_pdf_row("Water Plan", data.get("WRPDescriptionList", "-"))
 
-    add_pdf_row("Water Name/Type", data.get("WaterName/Type", "N/A"))
+    add_pdf_row("Water Name/Type", data.get("WaterName/Type", "-"))
 
-    add_pdf_row("Max Rate of Extraction", data.get("MaxExtractionRateMLperDay", "N/A"))
+    add_pdf_row("Max Rate of Extraction", data.get("MaxExtractionRateMLperDay", "-"))
 
-    add_pdf_row("Schedule A Conditions", data.get("ScheduleAConditionsList", "N/A"))
+    add_pdf_row("Schedule A Conditions", data.get("ScheduleAConditionsList", "-"))
     
     pdf.ln(10)
     
