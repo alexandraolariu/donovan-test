@@ -90,7 +90,7 @@ def create_pdf(data):
     pdf.set_font("helvetica", "B", 10)
     pdf.cell(30, 8, "Expiry Date:")
     pdf.set_font("helvetica", "", 10)
-    pdf.cell(0, 8, str(data.get("ExpiryDate", "-")), ln=True)
+    pdf.cell(0, 8, str(data.get("ExpireLapseDate", "30/06/2111")), ln=True)
     pdf.ln(1)
 
     # 2. FIX: Use 'add_row' consistently (not add_pdf_row)
