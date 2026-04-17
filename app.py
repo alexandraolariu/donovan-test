@@ -75,10 +75,17 @@ def create_pdf(data):
 
     # 1. FIX: Define the helper function
     def add_row(label, value):
+        # .strip() șterge tab-urile și spațiile invizibile
+        val_curat = str(value).strip()
+        
+        # Dacă după curățare nu mai rămâne nimic, sau e N/A, punem "-"
+        if val_curat in ["", "N/A", "nan", "None"]:
+            val_curat = "-"
+            
         pdf.set_font("helvetica", "B", 10)
-        pdf.cell(45, 8, f"{label}:", border=0) # Added colon for better look
+        pdf.cell(45, 8, label, border=0)
         pdf.set_font("helvetica", "", 10)
-        pdf.multi_cell(0, 8, str(value), border=0)
+        pdf.multi_cell(0, 8, val_curat, border=0)
         pdf.ln(1)
 
     # Reference & Expiry on the same line
