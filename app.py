@@ -93,12 +93,34 @@ def create_pdf(data):
     pdf.cell(0, 8, str(data.get("ExpiryDate", "-")), ln=True)
     pdf.ln(1)
 
-    # Câmpurile principale din imagine
-    add_row("Licensee", data.get("ClientLegalName", "-"))
-    add_row("Authorised Activity", data.get("AuthorisedActivity", "-"))
-    add_row("Authorised Purpose", data.get("AuthorisedPurposeList", "-"))
-    add_row("Description of Land", data.get("LocationLandList", "-"))
-    add_row("Nominal Entitlement", f"{data.get('NominalEntitlementPerWaterYearAndUnits', '-')}")
+    # Restul câmpurilor
+    add_pdf_row("Licensee", data.get("ClientLegalName", "-"))
+    add_pdf_row("Authorised Purpose", data.get("AuthorisedPurposeList", "-"))
+
+    
+    # Adăugăm Description of Land dacă există în datele tale
+    land = data.get("LocationLandList", "-")
+    add_pdf_row("Description of Land", land)
+    
+    volum = data.get('NominalEntitlementPerWaterYearAndUnits', '-')
+    add_pdf_row("Nominal Entitlement", f"{volum}")
+
+    add_pdf_row("Management Subgroup List", data.get("ManagementSubgroupList", "-"))
+
+    add_pdf_row("Management Group List", data.get("ManagementGroupList", "-"))
+
+    add_pdf_row("Water Sources List", data.get("WaterSourcesList", "-"))
+
+    add_pdf_row("Water Plan", data.get("WRPDescriptionList", "-"))
+
+    add_pdf_row("Water Name/Type", data.get("WaterName/Type", "-"))
+
+    add_pdf_row("Max Rate of Extraction", data.get("MaxExtractionRateMLperDay", "-"))
+
+    add_pdf_row("Schedule A Conditions", data.get("ScheduleAConditionsList", "-"))
+
+
+    
 
     pdf.ln(8)
     pdf.set_font("helvetica", "", 9)
