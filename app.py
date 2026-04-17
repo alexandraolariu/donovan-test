@@ -4,29 +4,18 @@ import os
 from fpdf import FPDF
 from datetime import datetime
 
-# 1. CONFIGURARE PAGINĂ STREAMLIT
+# 1. CONFIGURARE PAGINĂ
 st.set_page_config(page_title="Water License Portal", page_icon="💧", layout="wide")
-
-# --- LISTA NEAGRĂ (Coloane eliminate din vizualizare, dar păstrate pentru PDF) ---
-COLOANE_DE_SCOS = [
-    "PostalStateDescription", "PostalCountryDescription", "StatutoryClassDesc",
-    "AuthorisationTypeDesc", "AuthorisationStatusDesc", "AllocationClassDesc",
-    "IsActive", "IsBillable", "WaterAccountList", 
-    "WRPDescriptionList", "ROPDescription", "ROPLocationName", 
-    "ROPLocationDescription", "MaxHeightMetre", "IsWaterAllocation", 
-    "IsDevelopmentAuthorisation", "IsApproval", "IsNotice", 
-    "IsStockDomestic", "BasinList", "IsWaterAuthorisation"
-]
 
 # --- FUNCȚIE CONVERSIE DATĂ ÎN FORMAT OFICIAL ---
 def format_official_date(date_str):
     if not date_str or str(date_str).lower() == 'n/a':
-        return "TWENTY-FIRST day of SEPTEMBER 2021"
+        return "DATE UNKNOWN"
         
     try:
         clean_date = str(date_str).split(' ')[0]
         dt = None
-        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y"):
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%Y/%m/%d"):
             try:
                 dt = datetime.strptime(clean_date, fmt)
                 break
@@ -54,12 +43,12 @@ def format_official_date(date_str):
     except:
         return str(date_str)
 
-# 2. CLASA PDF CU LOGO ÎN HEADER ȘI LINK ÎN FOOTER
+# 2. CLASA PDF CU LOGO POZIȚIONAT CA ÎN IMAGINE
 class PDF_With_Extras(FPDF):
     def header(self):
         if os.path.exists("donovanlogo.png"):
-            # Poziționat în dreapta sus (x=165, y=10)
-            self.image("donovanlogo.png", 165, 10, 30)
+            # Poziționat fix ca în imaginea trimisă (dreapta sus)
+            self.image("donovanlogo.png", 165, 10, 32)
         self.set_y(25)
 
     def footer(self):
@@ -77,14 +66,14 @@ def create_pdf(data):
     pdf.add_page()
     pdf.set_margins(25, 20, 25)
     
-    # TITLU
+    # TITLU CENTRAT
     pdf.set_font("helvetica", "B", 14)
     pdf.cell(0, 7, "WATER LICENCE", ln=True, align='C')
     pdf.set_font("helvetica", "BI", 11)
     pdf.cell(0, 7, "Water Act 2000", ln=True, align='C')
     pdf.ln(12)
 
-    # Funcție internă pentru rânduri aliniate (stil tabel oficial)
+    # Funcție pentru rânduri aliniate stil tabel
     def add_row(label, value):
         pdf.set_font("helvetica", "B", 10)
         pdf.cell(45, 8, label, border=0)
@@ -92,7 +81,7 @@ def create_pdf(data):
         pdf.multi_cell(0, 8, str(value), border=0)
         pdf.ln(1)
 
-    # DATE PRINCIPALE (Reference & Expiry)
+    # Reference & Expiry pe același rând
     pdf.set_font("helvetica", "B", 10)
     pdf.cell(45, 8, "Reference")
     pdf.set_font("helvetica", "", 10)
@@ -101,12 +90,12 @@ def create_pdf(data):
     pdf.set_font("helvetica", "B", 10)
     pdf.cell(30, 8, "Expiry Date")
     pdf.set_font("helvetica", "", 10)
-    pdf.cell(0, 8, str(data.get("ExpiryDate", "30/06/2111")), ln=True)
+    pdf.cell(0, 8, str(data.get("ExpiryDate", "-")), ln=True)
     pdf.ln(1)
 
-    # SECȚIUNI CONFORM IMAGINII
+    # Câmpurile principale din imagine
     add_row("Licensee", data.get("ClientLegalName", "-"))
-    add_row("Authorised Activity", data.get("AuthorisedActivity", "The taking of water..."))
+    add_row("Authorised Activity", data.get("AuthorisedActivity", "-"))
     add_row("Authorised Purpose", data.get("AuthorisedPurposeList", "-"))
     add_row("Description of Land", data.get("LocationLandList", "-"))
     add_row("Nominal Entitlement", f"{data.get('NominalEntitlementPerWaterYearAndUnits', '-')}")
@@ -116,7 +105,7 @@ def create_pdf(data):
     pdf.multi_cell(0, 5, "This water licence is subject to the conditions endorsed hereon or attached hereto.")
     pdf.ln(4)
     
-    # DATA DINAMICĂ
+    # Data emiterii (IssuedDate) transformată în cuvinte
     formatted_date = format_official_date(data.get("IssuedDate", ""))
     pdf.set_font("helvetica", "B", 10)
     pdf.cell(0, 8, f"Given at Toowoomba this {formatted_date}.", ln=True)
@@ -131,7 +120,7 @@ def create_pdf(data):
 # 3. DESIGN (CSS)
 st.markdown("<style>.main { background-color: #f8f9fa; } #MainMenu, footer, header {visibility: hidden;} .detail-card { background-color: white; padding: 25px; border-radius: 15px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-top: 20px; }</style>", unsafe_allow_html=True)
 
-# 4. ÎNCĂRCARE DATE
+# 4. ÎNCĂRCARE DATE (Fără nicio coloană scoasă)
 @st.cache_data(show_spinner="Loading database...")
 def load_data():
     try:
@@ -140,10 +129,6 @@ def load_data():
         else:
             df = pd.read_csv("water-licence-attributes.csv", encoding='cp1252', on_bad_lines='skip')
         
-        # Eliminăm coloanele inutile, dar PĂSTRĂM IssuedDate pentru PDF
-        cols_to_drop = [c for c in df.columns if any(x.strip().lower() == c.strip().lower() for x in COLOANE_DE_SCOS)]
-        df = df.drop(columns=cols_to_drop)
-
         if "AuthorisationReference" in df.columns:
             df = df.rename(columns={"AuthorisationReference": "Water License"})
         return df.fillna('N/A')
@@ -163,17 +148,20 @@ with c2: s_auth = st.text_input("🔢 Water License No:")
 with c3: s_water = st.text_input("🌊 Water Name/Type:")
 
 d_show = df.copy()
-if s_name: d_show = d_show[d_show["ClientLegalName"].astype(str).str.contains(s_name, case=False, na=False)]
-if s_auth: d_show = d_show[d_show["Water License"].astype(str).str.contains(s_auth, case=False, na=False)]
+# Filtrare flexibilă (căutăm coloanele corecte în caz că s-au redenumit)
+if s_name:
+    name_col = "ClientLegalName" if "ClientLegalName" in d_show.columns else d_show.columns[0]
+    d_show = d_show[d_show[name_col].astype(str).str.contains(s_name, case=False, na=False)]
+if s_auth:
+    d_show = d_show[d_show["Water License"].astype(str).str.contains(s_auth, case=False, na=False)]
 
 # 6. REZULTATE
-final_df = d_show.head(100) if not (s_name or s_auth) else d_show
+final_df = d_show
 
 if not final_df.empty:
-    config = {"IssuedDate": None} # Ascundem data emiterii din tabelul principal
     selection = st.dataframe(
         final_df, use_container_width=True, hide_index=True,
-        on_select="rerun", selection_mode="single-row", column_config=config
+        on_select="rerun", selection_mode="single-row"
     )
 else:
     st.warning("No results found.")
@@ -197,10 +185,9 @@ if selection and selection.get("selection") and len(selection["selection"]["rows
         st.download_button("📥 Download CSV Record", csv_record, "record.csv", "text/csv")
     
     st.markdown("---")
-    # Afișăm detaliile în UI (fără IssuedDate)
-    ui_display = {k: v for k, v in row_data.items() if k != "IssuedDate"}
+    # Afișăm absolut TOATE coloanele în interfață, conform cerinței
     detail_cols = st.columns(3)
-    for i, (key, value) in enumerate(ui_display.items()):
+    for i, (key, value) in enumerate(row_data.items()):
         with detail_cols[i % 3]:
             st.markdown(f"**{key}**")
             st.info(str(value))
