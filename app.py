@@ -73,61 +73,50 @@ def create_pdf(data):
     pdf.cell(0, 7, "Water Act 2000", ln=True, align='C')
     pdf.ln(12)
 
-    # Funcție pentru rânduri aliniate stil tabel
+    # 1. FIX: Define the helper function
     def add_row(label, value):
         pdf.set_font("helvetica", "B", 10)
-        pdf.cell(45, 8, label, border=0)
+        pdf.cell(45, 8, f"{label}:", border=0) # Added colon for better look
         pdf.set_font("helvetica", "", 10)
         pdf.multi_cell(0, 8, str(value), border=0)
         pdf.ln(1)
 
-    # Reference & Expiry pe același rând
+    # Reference & Expiry on the same line
     pdf.set_font("helvetica", "B", 10)
-    pdf.cell(45, 8, "Reference")
+    pdf.cell(45, 8, "Reference:")
     pdf.set_font("helvetica", "", 10)
     pdf.cell(55, 8, str(data.get("Water License", "-")))
     
     pdf.set_font("helvetica", "B", 10)
-    pdf.cell(30, 8, "Expiry Date")
+    pdf.cell(30, 8, "Expiry Date:")
     pdf.set_font("helvetica", "", 10)
     pdf.cell(0, 8, str(data.get("ExpiryDate", "-")), ln=True)
     pdf.ln(1)
 
-    # Restul câmpurilor
-    add_pdf_row("Licensee", data.get("ClientLegalName", "-"))
-    add_pdf_row("Authorised Purpose", data.get("AuthorisedPurposeList", "-"))
-
+    # 2. FIX: Use 'add_row' consistently (not add_pdf_row)
+    add_row("Licensee", data.get("ClientLegalName", "-"))
+    add_row("Authorised Purpose", data.get("AuthorisedPurposeList", "-"))
     
-    # Adăugăm Description of Land dacă există în datele tale
     land = data.get("LocationLandList", "-")
-    add_pdf_row("Description of Land", land)
+    add_row("Description of Land", land)
     
     volum = data.get('NominalEntitlementPerWaterYearAndUnits', '-')
-    add_pdf_row("Nominal Entitlement", f"{volum}")
+    add_row("Nominal Entitlement", f"{volum}")
 
-    add_pdf_row("Management Subgroup List", data.get("ManagementSubgroupList", "-"))
-
-    add_pdf_row("Management Group List", data.get("ManagementGroupList", "-"))
-
-    add_pdf_row("Water Sources List", data.get("WaterSourcesList", "-"))
-
-    add_pdf_row("Water Plan", data.get("WRPDescriptionList", "-"))
-
-    add_pdf_row("Water Name/Type", data.get("WaterName/Type", "-"))
-
-    add_pdf_row("Max Rate of Extraction", data.get("MaxExtractionRateMLperDay", "-"))
-
-    add_pdf_row("Schedule A Conditions", data.get("ScheduleAConditionsList", "-"))
-
-
-    
+    add_row("Management Subgroup", data.get("ManagementSubgroupList", "-"))
+    add_row("Management Group", data.get("ManagementGroupList", "-"))
+    add_row("Water Sources", data.get("WaterSourcesList", "-"))
+    add_row("Water Plan", data.get("WRPDescriptionList", "-"))
+    add_row("Water Name/Type", data.get("WaterName/Type", "-"))
+    add_row("Max Extraction Rate", data.get("MaxExtractionRateMLperDay", "-"))
+    add_row("Schedule A Conditions", data.get("ScheduleAConditionsList", "-"))
 
     pdf.ln(8)
     pdf.set_font("helvetica", "", 9)
     pdf.multi_cell(0, 5, "This water licence is subject to the conditions endorsed hereon or attached hereto.")
     pdf.ln(4)
     
-    # Data emiterii (IssuedDate) transformată în cuvinte
+    # Data emiterii
     formatted_date = format_official_date(data.get("IssuedDate", ""))
     pdf.set_font("helvetica", "B", 10)
     pdf.cell(0, 8, f"Given at Toowoomba this {formatted_date}.", ln=True)
