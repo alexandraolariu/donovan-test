@@ -17,11 +17,38 @@ COLOANE_DE_SCOS = [
     "IsStockDomestic", "BasinList", "IsWaterAuthorisation"
 ]
 
+
+
+
 # 2. FUNCȚIE GENERARE PDF (Format Oficial - Inclusiv Expiry Date)
+class PDF_With_Footer(FPDF):
+    def footer(self):
+        # Poziționăm cursorul la 1.5 cm de subsol
+        self.set_y(-15)
+        self.set_font("helvetica", "I", 8)
+        self.set_text_color(100, 100, 100) # Un gri discret
+        
+        # Textul normal
+        text_part1 = "This is not an official extract. For an official extract please contact "
+        self.write(5, text_part1)
+        
+        # Textul cu link (albastru și subliniat)
+        self.set_text_color(0, 0, 255)
+        self.set_font("helvetica", "IU", 8)
+        link_url = "https://www.business.qld.gov.au/industries/mining-energy-water/water/authorisations/licences/applications"
+        self.write(5, "Business Queensland", link_url)
+        
+        # Resetăm culoarea pentru orice eventualitate
+        self.set_text_color(0, 0, 0)
+
+
 def create_pdf(data):
-    pdf = FPDF()
+
+    pdf = PDF_With_Footer() 
     pdf.add_page()
     pdf.set_margins(20, 20, 20)
+    pdf.set_auto_page_break(auto=True, margin=20)
+    
     
     # Header
     pdf.set_font("helvetica", "B", 16)
