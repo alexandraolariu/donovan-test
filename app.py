@@ -136,7 +136,32 @@ def create_pdf(data):
     return bytes(pdf.output())
 
 # 3. DESIGN (CSS)
-st.markdown("<style>.main { background-color: hsla(222.86,40.81%,43.73%,1); } #MainMenu, footer, header {visibility: hidden;} .detail-card { background-color: white; padding: 25px; border-radius: 15px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-top: 20px; }</style>", unsafe_allow_html=True)
+st.markdown("""
+<style>
+    /* Am schimbat .main cu .stApp ca să prindă culoarea pe tot fundalul */
+    .stApp { 
+        background-color: hsla(222.86,40.81%,43.73%,1) !important; 
+    } 
+
+    #MainMenu, footer, header {visibility: hidden;} 
+
+    /* Tot ce aveai tu înainte pentru cardul de detalii */
+    .detail-card { 
+        background-color: white; 
+        padding: 25px; 
+        border-radius: 15px; 
+        border: 1px solid #e0e0e0; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+        margin-top: 20px; 
+    }
+
+    /* BONUS: Am adăugat asta ca să poți citi textul (titlurile) pe fundalul tău albastru */
+    h1, h2, h3, label, .stMarkdown {
+        color: white !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 
 # 4. ÎNCĂRCARE DATE (Fără nicio coloană scoasă)
 @st.cache_data(show_spinner="Loading database...")
