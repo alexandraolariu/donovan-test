@@ -177,19 +177,6 @@ if s_auth:
 final_df = d_show
 
 if not final_df.empty:
-    selection = st.dataframe(
-        final_df, use_container_width=True, hide_index=True,
-        on_select="rerun", selection_mode="single-row"
-    )
-else:
-    st.warning("No results found.")
-    selection = None
-
-
-# 6. REZULTATE
-final_df = d_show
-
-if not final_df.empty:
     # READAUGAT: Afișează numărul de înregistrări găsite
     st.success(f"Found {len(final_df)} records")
     
