@@ -135,33 +135,60 @@ def create_pdf(data):
 
     return bytes(pdf.output())
 
+
 # 3. DESIGN (CSS)
 st.markdown("""
 <style>
-    /* Am schimbat .main cu .stApp ca să prindă culoarea pe tot fundalul */
+    /* Fundalul principal al aplicației */
     .stApp { 
-        background-color: hsla(222.86,40.81%,43.73%,1) !important; 
+        background-color: hsla(222.86, 40.81%, 43.73%, 1) !important; 
     } 
 
     #MainMenu, footer, header {visibility: hidden;} 
 
-    /* Tot ce aveai tu înainte pentru cardul de detalii */
+    /* Stilul pentru spinner-ul de Loading */
+    div[data-testid="stAlert"] {
+        background-color: white !important;
+        border-radius: 10px !important;
+    }
+    div[data-testid="stAlert"] p {
+        color: black !important;
+    }
+
+    /* Cardul alb pentru detalii (Record Details) */
     .detail-card { 
-        background-color: white; 
+        background-color: white !important; 
         padding: 25px; 
         border-radius: 15px; 
         border: 1px solid #e0e0e0; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
         margin-top: 20px; 
     }
 
-    /* BONUS: Am adăugat asta ca să poți citi textul (titlurile) pe fundalul tău albastru */
+    /* --- MODIFICARE BULE (st.info) --- */
+    /* Targetăm casetele de info din cele 3 coloane pentru a le face mai închise */
+    div[data-testid="stNotification"] {
+        background-color: rgba(0, 0, 0, 0.4) !important; /* Negru transparent */
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Forțăm textul din interiorul bulelor să fie alb */
+    div[data-testid="stNotification"] div {
+        color: white !important;
+    }
+
+    /* Culori pentru textele generale de pe fundalul albastru */
     h1, h2, h3, label, .stMarkdown {
         color: white !important;
     }
+
+    /* Fix pentru textul din interiorul cardului alb (să rămână negru) */
+    .detail-card h3, .detail-card b, .detail-card p {
+        color: black !important;
+    }
 </style>
 """, unsafe_allow_html=True)
-
 
 # 4. ÎNCĂRCARE DATE (Fără nicio coloană scoasă)
 @st.cache_data(show_spinner="Loading database...")
