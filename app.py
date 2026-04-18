@@ -136,7 +136,7 @@ def create_pdf(data):
     return bytes(pdf.output())
 
 # 3. DESIGN (CSS)
-st.markdown("<style>.main { background-color: #f8f9fa; } #MainMenu, footer, header {visibility: hidden;} .detail-card { background-color: white; padding: 25px; border-radius: 15px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-top: 20px; }</style>", unsafe_allow_html=True)
+st.markdown("<style>.main { background-color: hsla(222.86,40.81%,43.73%,1); } #MainMenu, footer, header {visibility: hidden;} .detail-card { background-color: white; padding: 25px; border-radius: 15px; border: 1px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-top: 20px; }</style>", unsafe_allow_html=True)
 
 # 4. ÎNCĂRCARE DATE (Fără nicio coloană scoasă)
 @st.cache_data(show_spinner="Loading database...")
@@ -185,6 +185,22 @@ else:
     st.warning("No results found.")
     selection = None
 
+
+# 6. REZULTATE
+final_df = d_show
+
+if not final_df.empty:
+    # READAUGAT: Afișează numărul de înregistrări găsite
+    st.success(f"Found {len(final_df)} records")
+    
+    selection = st.dataframe(
+        final_df, use_container_width=True, hide_index=True,
+        on_select="rerun", selection_mode="single-row"
+    )
+else:
+    st.warning("No results found.")
+    selection = None
+
 # 7. DETALII ȘI DOWNLOAD
 if selection and selection.get("selection") and len(selection["selection"]["rows"]) > 0:
     selected_index = selection["selection"]["rows"][0]
@@ -197,7 +213,7 @@ if selection and selection.get("selection") and len(selection["selection"]["rows
     
     b_col1, b_col2 = st.columns(2)
     with b_col1:
-        st.download_button("📄 Download Official PDF", pdf_bytes, f"Licence_{row_data.get('Water License')}.pdf", "application/pdf")
+        st.download_button("📄 Download Water License", pdf_bytes, f"Licence_{row_data.get('Water License')}.pdf", "application/pdf")
     with b_col2:
         csv_record = pd.DataFrame([row_data]).to_csv(index=False).encode('utf-8')
         st.download_button("📥 Download CSV Record", csv_record, "record.csv", "text/csv")
