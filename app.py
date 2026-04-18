@@ -248,4 +248,4 @@ if selection and selection.get("selection") and len(selection["selection"]["rows
         st.markdown('</div>', unsafe_allow_html=True)
 else:
     # Chestia care îi spune să apese pe tabel
-    st.info("💡 Please click on a row in the table above to view all detailed information and download options.")
+    st.info("💡 Please click on the box from a row in the table above to view all detailed information and download options.")
